@@ -6,6 +6,9 @@
 
 use utoipa::OpenApi;
 
+use crate::dto::{HealthResponse, SystemInfoResponse};
+use crate::routes::{live, ready, system_info};
+
 #[derive(OpenApi)]
 #[openapi(
     info(
@@ -13,6 +16,8 @@ use utoipa::OpenApi;
         version = "0.1.0",
         description = "IAOP Eligibility and Authorization service API. Contracts are governed by iaop-api-contracts."
     ),
-    servers((url = "/"))
+    servers((url = "/")),
+    paths(live, ready, system_info),
+    components(schemas(HealthResponse, SystemInfoResponse))
 )]
 pub struct ApiDoc;

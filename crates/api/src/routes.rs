@@ -29,14 +29,16 @@ pub fn build_router(state: AppState) -> Router {
 }
 
 /// Liveness: process is up. Must NOT depend on external systems.
-async fn live() -> impl IntoResponse {
+#[utoipa::path(get, path = "/health/live", tag = "ops", operation_id = "getHealthLive", summary = "Liveness probe", responses((status = 200, description = "Process is alive", body = HealthResponse)))]
+pub(crate) async fn live() -> impl IntoResponse {
     (StatusCode::OK, Json(HealthResponse { status: "ok" }))
 }
 
 /// Readiness: dependencies required to serve traffic.
 /// - No DB configured: ready (DB intentionally disabled).
 /// - DB configured: ready only if a query succeeds.
-async fn ready(State(state): State<AppState>) -> impl IntoResponse {
+#[utoipa::path(get, path = "/health/ready", tag = "ops", operation_id = "getHealthReady", summary = "Readiness probe", description = "Ready only when required dependencies (PostgreSQL when configured) are reachable.", responses((status = 200, description = "Ready", body = HealthResponse),(status = 503, description = "Degraded — dependency unavailable", body = HealthResponse)))]
+pub(crate) async fn ready(State(state): State<AppState>) -> impl IntoResponse {
     match &state.db {
         Some(pool) => {
             if persistence::ping(pool).await {
@@ -52,7 +54,8 @@ async fn ready(State(state): State<AppState>) -> impl IntoResponse {
     }
 }
 
-async fn system_info(State(state): State<AppState>) -> impl IntoResponse {
+#[utoipa::path(get, path = "/api/v1/system/info", tag = "ops", operation_id = "getSystemInfo", summary = "Service metadata", responses((status = 200, description = "Service info", body = SystemInfoResponse)))]
+pub(crate) async fn system_info(State(state): State<AppState>) -> impl IntoResponse {
     let info = GetServiceInfoQuery {
         service_name: state.config.service_name.clone(),
         service_version: state.config.service_version.clone(),
